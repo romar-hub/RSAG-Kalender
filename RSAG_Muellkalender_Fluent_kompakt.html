@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RSAG Müll – Rosenapfelweg 11</title>
+<style>
+:root { color-scheme: dark; }
+* { box-sizing:border-box; }
+body {
+  margin:0; min-height:100vh; font-family:"Segoe UI",Arial,sans-serif;
+  background:#101417; color:#f4f7f8; display:flex; justify-content:center;
+  padding:28px 18px;
+}
+.wrap { width:min(760px,100%); }
+.header { margin-bottom:18px; }
+h1 { font-size:28px; margin:0 0 4px; font-weight:700; }
+.sub { color:#aeb8bd; font-size:14px; }
+.next {
+  background:#1d272c; border:1px solid #344148; border-radius:18px;
+  padding:22px; margin-bottom:18px;
+}
+.next .label { color:#aeb8bd; font-size:13px; text-transform:uppercase; letter-spacing:.08em; }
+.next-date { font-size:30px; font-weight:700; margin:6px 0 14px; }
+.tags { display:flex; flex-wrap:wrap; gap:8px; }
+.tag { padding:8px 12px; border-radius:999px; font-weight:650; font-size:15px; }
+.bio { background:#5c351f; color:#dff5df; }
+.wertstoff { background:#6d5a08; color:#fff6b5; }
+.papier { background:#164f82; color:#d8edff; }
+.rest { background:#44484b; color:#fff; }
+.list { display:grid; gap:10px; }
+.row {
+  display:flex; align-items:center; justify-content:space-between; gap:14px;
+  background:#192126; border:1px solid #2d373d; border-radius:14px;
+  padding:14px 16px;
+}
+.date { font-weight:700; min-width:100px; }
+.items { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:7px; }
+.mini { font-size:13px; padding:6px 9px; border-radius:8px; font-weight:600; }
+.footer { color:#7f8b91; font-size:12px; margin-top:16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <h1>🗑️ RSAG Müllkalender</h1>
+    <div class="sub">Rosenapfelweg 11 · 53340 Meckenheim</div>
+  </div>
+  <section class="next" id="next">
+    <div class="label">Nächste Abholung</div>
+    <div class="next-date" id="nextDate">–</div>
+    <div class="tags" id="nextTags"></div>
+  </section>
+  <div class="list" id="list"></div>
+  <div class="footer">Quelle: RSAG-Abfuhrkalender 2026 · Stand der Termine aus der bereitgestellten ICS-Datei</div>
+</div>
+<script>
+const events = [{"date": "2026-10-02", "label": "Bio", "cls": "bio"}, {"date": "2026-10-02", "label": "Wertstoff", "cls": "wertstoff"}, {"date": "2026-10-09", "label": "Bio", "cls": "bio"}, {"date": "2026-10-09", "label": "Papier", "cls": "papier"}, {"date": "2026-10-16", "label": "Bio", "cls": "bio"}, {"date": "2026-10-16", "label": "Restmüll", "cls": "rest"}, {"date": "2026-10-23", "label": "Bio", "cls": "bio"}, {"date": "2026-10-30", "label": "Bio", "cls": "bio"}, {"date": "2026-10-30", "label": "Wertstoff", "cls": "wertstoff"}, {"date": "2026-11-06", "label": "Bio", "cls": "bio"}, {"date": "2026-11-06", "label": "Papier", "cls": "papier"}, {"date": "2026-11-13", "label": "Bio", "cls": "bio"}, {"date": "2026-11-13", "label": "Restmüll", "cls": "rest"}, {"date": "2026-11-20", "label": "Bio", "cls": "bio"}, {"date": "2026-11-27", "label": "Bio", "cls": "bio"}, {"date": "2026-11-27", "label": "Wertstoff", "cls": "wertstoff"}, {"date": "2026-12-04", "label": "Bio", "cls": "bio"}, {"date": "2026-12-04", "label": "Papier", "cls": "papier"}, {"date": "2026-12-11", "label": "Bio", "cls": "bio"}, {"date": "2026-12-11", "label": "Restmüll", "cls": "rest"}, {"date": "2026-12-18", "label": "Bio", "cls": "bio"}, {"date": "2026-12-24", "label": "Bio", "cls": "bio"}, {"date": "2026-12-24", "label": "Wertstoff", "cls": "wertstoff"}];
+
+const names = {
+  bio:"🟢 Bio",
+  wertstoff:"🟡 Wertstoff",
+  papier:"🔵 Papier",
+  rest:"⚫ Restmüll"
+};
+
+const now = new Date();
+const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+const upcoming = events
+  .map(e => ({...e, d:new Date(e.date+"T00:00:00")}))
+  .filter(e => e.d >= today);
+
+const groups = [];
+for (const e of upcoming) {
+  const key = e.date;
+  let g = groups.find(x => x.date === key);
+  if (!g) { g={date:key, items:[]}; groups.push(g); }
+  g.items.push(e);
+}
+
+function deDate(s) {
+  return new Date(s+"T00:00:00").toLocaleDateString("de-DE", {weekday:"short", day:"2-digit", month:"2-digit", year:"numeric"});
+}
+
+if (groups.length) {
+  const first = groups[0];
+  document.getElementById("nextDate").textContent = deDate(first.date);
+  document.getElementById("nextTags").innerHTML =
+    first.items.map(e => `<span class="tag ${e.cls}">${names[e.cls]}</span>`).join("");
+
+  document.getElementById("list").innerHTML = groups.slice(1,5).map(g =>
+    `<div class="row"><div class="date">${deDate(g.date)}</div>
+     <div class="items">${g.items.map(e => `<span class="mini ${e.cls}">${names[e.cls]}</span>`).join("")}</div></div>`
+  ).join("");
+} else {
+  document.getElementById("nextDate").textContent = "Keine weiteren Termine";
+}
+</script>
+</body>
+</html>
